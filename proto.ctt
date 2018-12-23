@@ -1,0 +1,37 @@
+module proto where 
+
+import path
+import z 
+
+data unit = tt 
+
+idfun (A : U) (a : A) : A = a 
+
+funExt (A : U) (B : A -> U) (f g : (x : A) -> B x) (p : (x : A) -> Path (B x) (f x) (g x))
+     : Path ((y : A) -> B y) f g = <i> \(a : A) -> (p a) @ i
+
+cong (A : U) (B : A -> U) (f : (x : A) -> B x) (a b : A) (p : Path A a b) : 
+  PathP (<i> B (p @ i)) (f a) (f b) = <i> f (p @ i)
+-- cong2 (A : U) (B : A -> U) (C : (x : A) -> B x -> U) (f : (x : A) -> (y : B x) -> C x y) 
+--       (a a' : A) (b : B a) (b' : B a') (p : Path A a a') (q : PathP (<i> B (p @ i)) b b') 
+--     : PathP (<i> C (q @ i)) (f a b) (f a' b') = <i> f (p @ i) (q @ i)
+
+isProp  (A : U) : U = (x y : A) -> Path A x y 
+isSet   (A : U) : U = (x y : A) -> isProp (Path A x y)
+isContr (A : U) : U = (x : A) * ((y : A) -> Path A x y)
+
+isHLevel (A : U) : nat -> U = split 
+  zero  -> isContr A 
+  suc n -> (a b : A) -> isHLevel (Path A a b) n
+
+fiber (A B : U) (f : A -> B) (y : B) : U = (x : A) * Path B y (f x)
+
+singl (A : U) (a : A) : U = (x : A) * Path A a x
+contrSingl (A : U) (a b : A) (p : Path A a b) : Path (singl A a) (a,<i> a) (b,p) = 
+  <i> (p @ i,<j> p @ i /\ j)
+
+compinv (A : U) (a b : A) (p : Path A a b) : Path A a a = 
+  <i> comp (<_> A) (p @ i) [ (i=0) -> <j> a, (i=1) -> <j> p @ -j ]
+
+and (A B : U) : U = (_ : A) * B
+data or (A B : U) = inl (a : A) | inr (b : B)

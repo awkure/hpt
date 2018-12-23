@@ -1,0 +1,7 @@
+module maybe where 
+
+import proto
+
+data maybe (A : U) = nothing | just (_ : A)
+
+fromMaybe (A: U) (d : A) : maybe A -> A = split { nothing -> d ; just a -> a }

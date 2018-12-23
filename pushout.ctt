@@ -1,0 +1,11 @@
+module pushout where 
+
+import proto 
+
+data pushout (A B C : U) (f : C -> A) (g : C -> B) 
+  = po1 (_ : A) 
+  | po2 (_ : B) 
+  | po3 (c : C) <i> [ (i=0) -> po1 (f c), (i=1) -> po2 (g c) ]
+  
+cofiber  (A B: U) (f: A -> B): U = pushout B unit A f (\(x: A) -> tt)
+cokernel (A B: U) (f: B -> A): U = pushout A A B f f

@@ -1,0 +1,16 @@
+module patch where
+
+import proto 
+import path 
+import vec
+import z
+
+data edit (A : U) = insert  (_ : nat) (_ : A) 
+                  | delete  (_ : nat) (_ : A)
+                  | replace (_ : nat) (_ : A) (_ : A)
+
+data patch (A : U) = list (_ : edit A)
+
+apply (A : U) (n : nat) (p : patch A) (d : vec A n) : vec A n = undefined 
+
+diff (A : U) (n : nat) (d1 d2 : vec A n) : patch A = undefined 

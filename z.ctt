@@ -1,0 +1,8 @@
+module z where
+
+data nat = zero | suc (_ : nat)
+
+add (m : nat) : nat -> nat = split { zero -> m ; suc n -> suc (add m n) }
+
+pred : nat -> nat = split { zero -> zero ; suc n -> n } 
+

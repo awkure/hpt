@@ -1,0 +1,3 @@
+module bool where 
+
+data bool = tt | ff 

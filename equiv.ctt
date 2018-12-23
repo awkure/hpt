@@ -1,0 +1,13 @@
+module equiv where 
+
+import proto
+
+isEquiv (A B : U) (f : A -> B) : U = (y : B) -> isContr (fiber A B f y)
+
+equiv (A B : U) : U = (f : A -> B) * isEquiv A B f 
+equivNeg (A B : U) (e : equiv A B) (y : B) : A = (e.2 y).1.1
+
+idIsEquiv (A : U) : isEquiv A A (idfun A) = \(a : A) -> ((a,<i> a), \(z : fiber A A (idfun A) a) -> contrSingl A a z.1 z.2)
+idEquiv (A : U) : equiv A A = (idfun A,idIsEquiv A)
+
+ua (A B : U) (e : equiv A B) : Path U A B = <i> Glue B [ (i=0) -> (A,e), (i=1) -> (B,idEquiv B) ]

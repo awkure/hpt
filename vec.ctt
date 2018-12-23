@@ -1,0 +1,9 @@
+module vec where 
+
+import z
+
+data vec (A : U) (n : nat) = vnil | vcons (_ : A) (_ : vec A (pred n))
+
+vappend (A : U) (x : A) (n : nat) (xs : vec A n) : vec A (suc n) = vcons x xs
+
+opaque vec 
