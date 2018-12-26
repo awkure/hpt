@@ -1,5 +1,3 @@
--- TODO : successor on equiv 
-
 module patch where
 
 import proto 
@@ -7,6 +5,7 @@ import path
 import s1
 import vec
 import nat
+import z
 import bool
 import equiv
 
@@ -15,6 +14,8 @@ data edit (A : U) = insert  (_ : nat) (_ : A)
                   | replace (_ : nat) (_ : A) (_ : A)
 
 data patch (A : U) = list (_ : edit A)
+
+history : nat -> U = undefined 
 
 apply (A : U) (n : nat) (p : patch A) (d : vec A n) : vec A n = undefined 
 
@@ -42,8 +43,6 @@ neglP1  (p     : P1) : Path P1 reflP1                  (compP1 p (negP1 p))    =
 unitrP1 (p     : P1) : Path P1 (compP1 p reflP1)       p                       = undefined 
 unitlP1 (p     : P1) : Path P1 p                       (compP1 p reflP1)       = undefined 
 
--- te : Path U nat nat = <i> ()
-
 interpP1 : (p : P1) -> Path U nat nat = split 
   sucP1  p1    -> <i> nat 
   reflP1       -> refl U nat
@@ -52,9 +51,7 @@ interpP1 : (p : P1) -> Path U nat nat = split
     where phi : Path U nat nat = interpP1 p1 
           psi : Path U nat nat = interpP1 p2 
 
--- s1Elim (X : U) (x : X) (p : Path X x x) : S1 -> X = split { base -> x ; loop @ i -> p @ i }
 I1nat (n : nat) (p : Path nat n n) (r1 : R1) : nat = s1Elim nat (suc n) (sucrefl (p @ 0) (p @ 1) p) r1
--- Ibool (r1 : R1) : U = s1Elim U bool notBoolEq r1
 
 I1 (A : U) (elim : Path U A A) (r1 : R1) : U = s1Elim U A elim r1
 I1bool : R1 -> U = I1 bool notBoolEq 
@@ -69,13 +66,26 @@ conv (p : Path S1 base base) : Path nat zero zero = <i> zero
 
 P1S : U = and P1 P1
 pcom : and P1 P1 -> P1S = undefined 
-square (f g h k : P1) (p : Path P1S (pcom (f , g)) (h , k)) : Path P1 (compP1 g f) (compP1 k h) = undefined -- path between sigmas
-rot (f g h k : P1) : Path P1S (pcom (f , g)) (h , k) -> Path P1S (pcom (g , negP1 k)) (negP1 f , h) = undefined 
+square  (f g h k : P1) (p : Path P1S (pcom (f , g)) (h , k)) : Path P1 (compP1 g f) (compP1 k h) = undefined
+rot     (f g h k : P1) : Path P1S (pcom (f , g)) (h , k) -> Path P1S (pcom (g , negP1 k)) (negP1 f , h) = undefined 
 reflect (f g h k : P1) : Path P1S (pcom (f , g)) (h , k) -> Path P1S (pcom (h , k)) (f , g) = undefined 
 
--- repeatP1 : z -> P1 = split 
---   zero -> reflP1 
---   pos n -> sucP1 (repeatP1 (pred n))
---   neg n -> negP1 (sucP1 (repeatP1 (suc n)))
+-- repeatP1 : Z -> P1 = split 
+--   inl u -> psi u where 
+--     psi : nat -> Z = split
+--       zero  -> reflP1 
+--       suc n -> negP1 (sucP1 (<i>(repeatP1 (pred n))))
+--   inr v -> phi v where 
+--     phi : nat -> Z = split 
+--       zero  -> reflP1 
+--       suc n -> sucP1 (<i> (repeatP1 (pred n)))
 
-history : nat -> U = undefined 
+-- data P2b (R E : U) = docP2
+--                    | fixedAtP2 (_ : E -> E -> nat -> nat) 
+--                        <i> [ (i = 0) -> docP2 
+--                            , (i = 1) -> docP2 ]
+--                    | indepP2 (_ : (i j : nat) (s u v t : E) -> neq i j 
+--                      -> Path (Path U docP2 docP2) (compPath (fixedAtP2 s t i) (fixedAtP2 u v j)) 
+--                                               (compPath (fixedAtP2 u v i) (fixedAtP2 s t j)))
+--                    | noopP2 (_ : (i : nat) (s : E) -> Path U (indepP2 s s i) refl)
+

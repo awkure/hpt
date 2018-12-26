@@ -1,5 +1,7 @@
 module nat where
 
+import path
+
 data nat = zero | suc (_ : nat)
 
 add (m : nat) : nat -> nat = split { zero -> m ; suc n -> suc (add m n) }
