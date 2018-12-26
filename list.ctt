@@ -3,11 +3,10 @@ module list where
 import equiv 
 import maybe 
 import bool
-import z
 
 data list (A : U) = nil | cons (_ : A) (_ : list A)
 
 isnull (A : U) : list A -> bool = split { nil -> tt ; cons _ _ -> ff }
 
-head (A : U) : list A -> maybe A = split { nil -> nothing ; cons x _ -> just x }
+head (A : U) : list A -> maybe       A  = split { nil -> nothing ; cons x  _ -> just x  }
 tail (A : U) : list A -> maybe (list A) = split { nil -> nothing ; cons _ xs -> just xs }

@@ -1,0 +1,77 @@
+module lang where 
+
+idfun (A : U) (a : A) : A = a 
+
+const1 (A B : U) (a : A) (_ : B) : A = a 
+const2 (A B : U) (_ : A) (b : B) : B = b
+
+laws (A : U) : U = (and : A -> A -> A) 
+                 * (or  : A -> A -> A) 
+                 * ((B : U) -> B -> B -> A -> B) -- TODO : W
+                 
+grammar : U = (A : U) * (D : U) * laws A
+
+alphabet   (G : grammar) :                                 U = G.1
+derivative (G : grammar) :                                 U = G.2.1
+and        (G : grammar) : G.1     -> G.1 ->             G.1 = G.2.2.1
+or         (G : grammar) : G.1     -> G.1 ->             G.1 = G.2.2.2.1
+rec        (G : grammar) : (B : U) -> B   -> B -> G.1 ->   B = G.2.2.2.2
+
+data list   (A : U) = nil  | cons (_ :   A) (_ : list   A)
+data stream (A : U) =        cons (_ :   A) (_ : stream A)
+
+head (A : U) : stream A ->        A = split cons x  _ ->  x
+tail (A : U) : stream A -> stream A = split cons _ xs -> xs
+
+data language (G : grammar) = con (_ : alphabet G) (_ : (derivative G) -> language G)
+
+nu (G : grammar) : language G ->                   (alphabet G) = split con x  _ ->  x 
+mu (G : grammar) : language G -> (derivative G) ->  language G  = split con _ xs -> xs 
+
+pt (G : grammar) (a : alphabet G) : language G = con a (\(_ : derivative G) -> pt G a)
+
+add (G : grammar) (a b : language G) : language G = con nuc muc 
+  where nuc                    : alphabet G = (or G) (nu G a  ) (nu G b  )
+        muc (x : derivative G) : language G = add G  (mu G a x) (mu G b x)
+
+compose (G : grammar) (a b : language G) : language G = con nuc muc 
+  where theta (x : derivative G) : language G = add G (compose G (mu G a x) b) (mu G b x)
+        zeta  (x : derivative G) : language G = compose G (mu G a x) b
+        nuc                      : alphabet G = (and G) (nu G a) (nu G b) 
+        muc   (x : derivative G) : language G = (rec G) (language G) (theta x) (zeta x) (nu G a)
+        
+kleene (G : grammar) (a : language G) (s : alphabet G) : language G 
+  = con s (\(x : derivative G) -> compose G (mu G a x) (kleene G a s))
+
+inside (G : grammar) (a : language G) : (sentence : list (derivative G)) -> alphabet G = split 
+  nil      -> nu G a 
+  cons x w -> inside G (mu G a x) w
+
+
+-- Binary alphabet example 
+
+data bool = ff | tt
+
+boolRec (A : U) (f t : A) : bool -> A = split { ff -> f ; tt -> t }
+
+orb   : bool -> bool -> bool = split { ff -> idfun  bool         ; tt -> const2 bool bool tt }
+andb  : bool -> bool -> bool = split { ff -> const2 bool bool ff ; tt -> idfun bool          }
+
+boolGrammar : grammar = (bool , bool , (andb , orb , boolRec))
+
+interp (c : bool) : language boolGrammar = con ff (muc c)
+  where i1  : bool ->         language boolGrammar = split { ff -> pt boolGrammar tt ; tt -> pt boolGrammar ff }
+        i2  : bool ->         language boolGrammar = split { ff -> pt boolGrammar ff ; tt -> pt boolGrammar tt }
+        muc : bool -> bool -> language boolGrammar = split { ff -> i1                ; tt -> i2                }
+
+-- Infinite alphabet example 
+
+data nat = zero | succ (_ : nat)
+
+natRec (A : U) (z : A) (s : nat -> A -> A) : (n : nat) -> A = split { zero -> z ; succ n -> s n (natRec A z s n) }
+
+orn (n : nat) : nat -> nat = split { zero -> n ; succ m -> succ (orn n m) }
+andn : nat -> nat -> nat 
+  = natRec (nat -> nat) (\(_ : nat) -> zero) (\(_ : nat) (mult : nat -> nat) (m : nat) -> orn m (mult m))
+  
+-- natGrammar : grammar = (nat , nat , (andn , orn , natRec))

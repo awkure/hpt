@@ -1,0 +1,12 @@
+module square where 
+
+Square (A : U) (a b c d : A) (u : Path A a b) (v : Path A c d) (p : Path A a c) (q : Path A b d) : U
+  = PathP (<i> (PathP (<j> A) (u @ i) (v @ i))) p q
+
+constSquare (A : U) (a : A) (p : Path A a a) : Square A a a a a p p p p
+  = <i j> comp (<_> A) a [ (i = 0) -> <k> p @ j \/ - k
+                         , (i = 1) -> <k> p @ j /\   k
+                         , (j = 0) -> <k> p @ i \/ - k
+                         , (j = 1) -> <k> p @ i /\   k ]
+                         
+

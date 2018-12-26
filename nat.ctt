@@ -1,0 +1,15 @@
+module nat where
+
+data nat = zero | suc (_ : nat)
+
+add (m : nat) : nat -> nat = split { zero -> m ; suc n -> suc (add m n) }
+
+pred : nat -> nat = split { zero -> zero ; suc n -> n } 
+
+one   : nat = suc zero
+two   : nat = suc one
+three : nat = suc two
+four  : nat = suc three
+five  : nat = suc four
+
+sucrefl (n m : nat) (p : Path nat n m) : Path nat (suc n) (suc m) = <i> suc (p @ i)

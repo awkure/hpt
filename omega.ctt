@@ -1,0 +1,8 @@
+module omega where 
+
+import path
+import pointed
+import nat
+
+Omega (A : pointed) : pointed = (PathP (<!0> A.1) (pt A) (pt A) , refl A.1 (pt A))
+OmegaN (A : pointed) : nat -> pointed = split { zero -> A ; suc n -> OmegaN (Omega A) n }

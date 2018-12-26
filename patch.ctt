@@ -1,9 +1,14 @@
+-- TODO : successor on equiv 
+
 module patch where
 
 import proto 
 import path 
+import s1
 import vec
-import z
+import nat
+import bool
+import equiv
 
 data edit (A : U) = insert  (_ : nat) (_ : A) 
                   | delete  (_ : nat) (_ : A)
@@ -14,3 +19,63 @@ data patch (A : U) = list (_ : edit A)
 apply (A : U) (n : nat) (p : patch A) (d : vec A n) : vec A n = undefined 
 
 diff (A : U) (n : nat) (d1 d2 : vec A n) : patch A = undefined 
+
+-- interpretPatch (R : U) (doc : R) : U = vec 
+
+R1    : U  = S1
+id    : R1 = base
+add1R : U  = loopS1
+
+-- TODO 
+s1tonat : S1 -> Path U nat nat = split  
+  base -> <i> nat
+  loop @ i -> <i> nat
+
+data P1 = sucP1 (_ : Path U nat nat)
+        | reflP1 
+        | negP1  (_ : P1)
+        | compP1 (_ : P1) (_ : P1) 
+        
+assoc   (p q r : P1) : Path P1 (compP1 p (compP1 q r)) (compP1 (compP1 p q) r) = undefined 
+negrP1  (p     : P1) : Path P1 (compP1 p (negP1 p))    reflP1                  = undefined 
+neglP1  (p     : P1) : Path P1 reflP1                  (compP1 p (negP1 p))    = undefined 
+unitrP1 (p     : P1) : Path P1 (compP1 p reflP1)       p                       = undefined 
+unitlP1 (p     : P1) : Path P1 p                       (compP1 p reflP1)       = undefined 
+
+-- te : Path U nat nat = <i> ()
+
+interpP1 : (p : P1) -> Path U nat nat = split 
+  sucP1  p1    -> <i> nat 
+  reflP1       -> refl U nat
+  negP1  p1    -> <i> interpP1 p1 @ -i
+  compP1 p1 p2 -> compPath U (phi @ 0) (phi @ 1) (psi @ 1) phi psi 
+    where phi : Path U nat nat = interpP1 p1 
+          psi : Path U nat nat = interpP1 p2 
+
+-- s1Elim (X : U) (x : X) (p : Path X x x) : S1 -> X = split { base -> x ; loop @ i -> p @ i }
+I1nat (n : nat) (p : Path nat n n) (r1 : R1) : nat = s1Elim nat (suc n) (sucrefl (p @ 0) (p @ 1) p) r1
+-- Ibool (r1 : R1) : U = s1Elim U bool notBoolEq r1
+
+I1 (A : U) (elim : Path U A A) (r1 : R1) : U = s1Elim U A elim r1
+I1bool : R1 -> U = I1 bool notBoolEq 
+
+conv (p : Path S1 base base) : Path nat zero zero = <i> zero 
+
+-- cong (A : U) (B : A -> U) (f : (x : A) -> B x) (a b : A) (p : Path A a b) : PathP (<i> B (p @ i)) (f a) (f b) = <i> f (p @ i)
+-- TODO : equiv 
+
+-- interpP1' (p : Path S1 base base) : Path U nat nat = cong R1 U c base base p
+--     where c : Path nat zero zero = I zero p p 
+
+P1S : U = and P1 P1
+pcom : and P1 P1 -> P1S = undefined 
+square (f g h k : P1) (p : Path P1S (pcom (f , g)) (h , k)) : Path P1 (compP1 g f) (compP1 k h) = undefined -- path between sigmas
+rot (f g h k : P1) : Path P1S (pcom (f , g)) (h , k) -> Path P1S (pcom (g , negP1 k)) (negP1 f , h) = undefined 
+reflect (f g h k : P1) : Path P1S (pcom (f , g)) (h , k) -> Path P1S (pcom (h , k)) (f , g) = undefined 
+
+-- repeatP1 : z -> P1 = split 
+--   zero -> reflP1 
+--   pos n -> sucP1 (repeatP1 (pred n))
+--   neg n -> negP1 (sucP1 (repeatP1 (suc n)))
+
+history : nat -> U = undefined 

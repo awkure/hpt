@@ -1,20 +1,37 @@
 module proto where 
 
 import path
-import z 
+import nat
 
 data unit = tt 
 
 idfun (A : U) (a : A) : A = a 
 
-funExt (A : U) (B : A -> U) (f g : (x : A) -> B x) (p : (x : A) -> Path (B x) (f x) (g x))
-     : Path ((y : A) -> B y) f g = <i> \(a : A) -> (p a) @ i
+const1 (A B : U) (a : A) (_ : B) : A = a 
+const2 (A B : U) (_ : A) (b : B) : B = b
 
-cong (A : U) (B : A -> U) (f : (x : A) -> B x) (a b : A) (p : Path A a b) : 
-  PathP (<i> B (p @ i)) (f a) (f b) = <i> f (p @ i)
+funExt (A : U) (B : A -> U) (f g : (x : A) -> B x) (p : (x : A) -> Path (B x) (f x) (g x)) 
+  : Path ((y : A) -> B y) f g = <i> \(a : A) -> (p a) @ i
+
+cong (A : U) (B : A -> U) (f : (x : A) -> B x) (a b : A) (p : Path A a b) : PathP (<i> B (p @ i)) (f a) (f b) = <i> f (p @ i)
 -- cong2 (A : U) (B : A -> U) (C : (x : A) -> B x -> U) (f : (x : A) -> (y : B x) -> C x y) 
 --       (a a' : A) (b : B a) (b' : B a') (p : Path A a a') (q : PathP (<i> B (p @ i)) b b') 
 --     : PathP (<i> C (q @ i)) (f a b) (f a' b') = <i> f (p @ i) (q @ i)
+
+subst (A : U) (P : A -> U) (a b : A) (p : Path A a b) (e : P a) : P b = transport (cong A (\(_ : A) -> U) P a b p) e
+  
+substNeg (A : U) (P : A -> U) (a b : A) (p : Path A a b) : P b -> P a = subst A P b a (<i> p @ -i)
+
+compPath (A : U) (a b c : A) (p : Path A a b) (q : Path A b c) : Path A a c =  
+  subst A (Path A a) b c q p
+
+compUp (A : U) (a a' b b' : A) (p : Path A a a') (q : Path A b b') (r : Path A a b) : Path A a' b' =
+  <i> comp (<j>A) (r @ i) [(i = 0) -> p, (i = 1) -> q]
+
+compDown (A : U) (a a' b b' : A) (p : Path A a a') (q: Path A b b') : Path A a' b' -> Path A a b =
+  compUp A a' a b' b (<i> p @ -i) (<i> q @ -i)
+  
+-- coe (A B : U) (p : Path U A B) (x : A) : B = trans A B p x
 
 isProp  (A : U) : U = (x y : A) -> Path A x y 
 isSet   (A : U) : U = (x y : A) -> isProp (Path A x y)
@@ -27,11 +44,12 @@ isHLevel (A : U) : nat -> U = split
 fiber (A B : U) (f : A -> B) (y : B) : U = (x : A) * Path B y (f x)
 
 singl (A : U) (a : A) : U = (x : A) * Path A a x
-contrSingl (A : U) (a b : A) (p : Path A a b) : Path (singl A a) (a,<i> a) (b,p) = 
-  <i> (p @ i,<j> p @ i /\ j)
+contrSingl (A : U) (a b : A) (p : Path A a b) : Path (singl A a) (a,<i> a) (b,p) = <i> (p @ i,<j> p @ i /\ j)
 
-compinv (A : U) (a b : A) (p : Path A a b) : Path A a a = 
-  <i> comp (<_> A) (p @ i) [ (i=0) -> <j> a, (i=1) -> <j> p @ -j ]
+compinv (A : U) (a b : A) (p : Path A a b) : Path A a a = <i> comp (<_> A) (p @ i) [ (i=0) -> <j> a, (i=1) -> <j> p @ -j ]
 
 and (A B : U) : U = (_ : A) * B
 data or (A B : U) = inl (a : A) | inr (b : B)
+
+J (A : U) (a : A) (C : (x : A) -> Path A a x -> U) (d : C a (refl A a)) (x : A) (p : Path A a x) : C x p =
+    subst (singl A a) (\(z : singl A a) -> C (z.1) (z.2)) (a, refl A a) (x, p) (contrSingl A a x p) d

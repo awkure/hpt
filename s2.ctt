@@ -1,0 +1,7 @@
+module s2 where 
+
+import proto
+
+data S2 = base | surf <i j> [ (i=0) -> base, (i=1) -> base, (j=0) -> base, (j=1) -> base ]
+
+loopS2 : U = Id S2 base base 

@@ -1,0 +1,6 @@
+module sigma where 
+
+import proto
+
+sigmaRec (A : U) (B : A -> U) (C : U) (g : (x : A) -> B x -> C) (p : (x : A) * B x) : C = g p.1 p.2
+-- sigmaInd (A : U) (B : A -> U) (C : (x : A) * B x -> U) (p : (x : A) * B x) (g : (a : A) (b : B a) -> C (a , b)) : C p = g p.1 p.2

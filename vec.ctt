@@ -1,6 +1,6 @@
 module vec where 
 
-import z
+import nat
 
 data vec (A : U) (n : nat) = vnil | vcons (_ : A) (_ : vec A (pred n))
 

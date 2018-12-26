@@ -1,3 +1,24 @@
 module bool where 
 
-data bool = tt | ff 
+import proto
+import equiv 
+
+data bool = ff | tt
+
+boolInd (A : U) (f t : A) : bool -> A = split { ff -> f ; tt -> t }
+
+notb : bool ->         bool = split { ff -> tt                  ; tt -> ff                  }
+orb  : bool -> bool -> bool = split { ff -> idfun  bool         ; tt -> const2 bool bool tt }
+andb : bool -> bool -> bool = split { ff -> const2 bool bool ff ; tt -> idfun bool          }
+
+notnotrefl : (b : bool) -> Path bool (notb (notb b)) b = split 
+  ff -> <i> ff
+  tt -> <i> tt 
+
+-- equiv (A B : U) : U = (f : A -> B) * isEquiv A B f 
+
+-- negBool is hence and equivalence:
+notBoolEquiv : equiv bool bool = (notb , isoToEquiv bool bool notb notb notnotrefl notnotrefl)
+
+-- -- This defines a non-trivial equality between bool and bool:
+notBoolEq : Path U bool bool = <i> Glue bool [ (i=0) -> (bool , notBoolEquiv) , (i=1) -> (bool , idEquiv bool) ]

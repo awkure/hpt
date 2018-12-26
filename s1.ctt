@@ -1,0 +1,14 @@
+module s1 where
+
+import proto
+import path
+import nat
+
+data S1 = base | loop <i> [ (i=0) -> base, (i=1) -> base ]
+
+loopS1 : U = Path S1 base base 
+compS1 : loopS1 -> loopS1 -> loopS1 = compPath S1 base base base
+
+trivial : loopS1 = <i> base 
+
+s1Elim (X : U) (x : X) (p : Path X x x) : S1 -> X = split { base -> x ; loop @ i -> p @ i }

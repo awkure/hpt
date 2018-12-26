@@ -1,0 +1,14 @@
+module trunc where 
+
+import proto
+import path
+import pointed 
+
+data trunc (A : U) = inc (a : A) 
+                   | squash (a b : trunc A) (p q : Path (trunc A) a b) 
+                       <i j> [ (i=0) -> p @ j
+                             , (i=1) -> q @ j
+                             , (j=0) -> a 
+                             , (j=1) -> b ]
+
+truncPointed (A : pointed) : pointed = (trunc A.1 , inc (pt A))

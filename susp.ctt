@@ -1,0 +1,13 @@
+module susp where 
+
+import proto
+import bool
+import s1 
+
+data susp (A : U) = north | south | merid (a : A) <i> [ (i=0) -> north, (i=1) -> south ]
+
+S2 : U = susp S1
+S3 : U = susp S2
+S4 : U = susp S3
+
+Sn : nat -> U = split { zero -> bool ; suc x -> susp (Sn x) }

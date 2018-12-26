@@ -1,0 +1,11 @@
+module hgroup where 
+
+import proto
+import path 
+import susp
+import s1 
+import s2
+import trunc
+
+pi1S1 : U = trunc loopS1
+pi1S2 : U = trunc loopS2
