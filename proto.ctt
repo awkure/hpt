@@ -1,7 +1,7 @@
 module proto where 
 
 import path
-import nat
+-- import nat
 
 data unit = tt 
 
@@ -9,6 +9,9 @@ idfun (A : U) (a : A) : A = a
 
 const1 (A B : U) (a : A) (_ : B) : A = a 
 const2 (A B : U) (_ : A) (b : B) : B = b
+
+pipe (A : U) (B : A -> U) (C : (a : A) -> B a -> U) (f : (a : A) -> (b : B a) -> C a b) 
+  (g : (a : A) -> B a) (a : A) : C a (g a) = f a (g a)
 
 funExt (A : U) (B : A -> U) (f g : (x : A) -> B x) (p : (x : A) -> Path (B x) (f x) (g x)) 
   : Path ((y : A) -> B y) f g = <i> \(a : A) -> (p a) @ i
@@ -37,10 +40,6 @@ isProp  (A : U) : U = (x y : A) -> Path A x y
 isSet   (A : U) : U = (x y : A) -> isProp (Path A x y)
 isContr (A : U) : U = (x : A) * ((y : A) -> Path A x y)
 
-isHLevel (A : U) : nat -> U = split 
-  zero  -> isContr A 
-  suc n -> (a b : A) -> isHLevel (Path A a b) n
-
 fiber (A B : U) (f : A -> B) (y : B) : U = (x : A) * Path B y (f x)
 
 singl (A : U) (a : A) : U = (x : A) * Path A a x
@@ -48,8 +47,6 @@ contrSingl (A : U) (a b : A) (p : Path A a b) : Path (singl A a) (a,<i> a) (b,p)
 
 compinv (A : U) (a b : A) (p : Path A a b) : Path A a a = <i> comp (<_> A) (p @ i) [ (i=0) -> <j> a, (i=1) -> <j> p @ -j ]
 
-and (A B : U) : U = (_ : A) * B
-data or (A B : U) = inl (a : A) | inr (b : B)
-
 J (A : U) (a : A) (C : (x : A) -> Path A a x -> U) (d : C a (refl A a)) (x : A) (p : Path A a x) : C x p =
     subst (singl A a) (\(z : singl A a) -> C (z.1) (z.2)) (a, refl A a) (x, p) (contrSingl A a x p) d
+    

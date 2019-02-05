@@ -1,0 +1,7 @@
+module ntype where 
+
+import nat
+
+isHLevel (A : U) : nat -> U = split 
+  zero  -> isContr A 
+  suc n -> (a b : A) -> isHLevel (Path A a b) n

@@ -1,6 +1,7 @@
 module nat where
 
 import path
+import bool
 
 data nat = zero | suc (_ : nat)
 
@@ -15,3 +16,11 @@ four  : nat = suc three
 five  : nat = suc four
 
 sucrefl (n m : nat) (p : Path nat n m) : Path nat (suc n) (suc m) = <i> suc (p @ i)
+
+eqnat : nat -> nat -> bool = split
+    zero -> split@(nat -> bool) with
+      zero  -> tt
+      suc n -> ff
+    suc m -> split@(nat -> bool) with
+      zero  -> ff
+      suc n -> eqnat m n

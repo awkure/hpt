@@ -1,0 +1,37 @@
+module desc where 
+
+import proto
+import path 
+
+mutual 
+    data Desc (I : U) (J : I -> U) = var (i : I) 
+                                   | kon (A : U) 
+                                   | sg  (S : Desc I J) (T : Approx I J S -> Desc I J)
+                                   | pi  (A : U) (T : A -> Desc I J)
+
+    Approx (I : U) (J : I -> U) : Desc I J -> U = split 
+        var i   -> J i
+        kon A   -> A 
+        sg  S T -> unit -- (s : S) * T s
+        pi  A T -> (a : A) -> Approx I J (T a)
+
+mutual
+    Data (I : U) (J : I -> U) (F : I -> Desc I J) (f : (i : I) -> Approx I J (F i) -> J i) (i : I) : U = Node I J F f (F i)
+    
+    Node (I : U) (J : I -> U) (F : I -> Desc I J) (f : (i : I) -> Approx I J (F i) -> J i) : Desc I J -> U = split 
+        var i -> Data I J F f i
+        kon A -> A 
+        sg S T -> unit -- (n : Node I J F f S) * (\(s : Node I J F f S) -> Node I J F f (T (approx I J F f S s)))
+        pi A T -> (a : A) -> Node I J F f (T a)
+
+    -- approx (I : U) (J : I -> U) (F : I -> Desc I J) (f : (i : I) -> Approx I J (F i) -> J i) 
+    --      : (D : Desc I J) -> (N : Node I J F f D) -> Approx I J D = split 
+    --         var _ -> \(N : Node I J F f D) -> decode I J F f I N
+    --         kon _ -> idfun
+    --         sg S T -> \(N : Node I J F f D) -> and s' (approx I J F f (T s') N.2) where s' = approx I J F f S N.1
+    --         pi A T -> \(f : _) (a : A) -> approx I J F f (T a) (f a)
+            
+    -- decode (I : U) (J : I -> U) (F : I -> Desc I J) (f : (i : I) -> Approx I J (F i) -> J i) (i : I) (d : Data I J F f i) : J i 
+    --     = f i (approx I J F f (F i) d)
+            
+        

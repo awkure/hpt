@@ -3,6 +3,7 @@ module z where
 import proto
 import equiv
 import nat 
+import sigma
 -- import hedberg 
 
 Z : U = or nat nat 
