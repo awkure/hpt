@@ -21,8 +21,6 @@ apply (A : U) (n : nat) (p : patch A) (d : vec A n) : vec A n = undefined
 
 diff (A : U) (n : nat) (d1 d2 : vec A n) : patch A = undefined 
 
--- interpretPatch (R : U) (doc : R) : U = vec 
-
 R1    : U  = S1
 id    : R1 = base
 add1R : U  = loopS1

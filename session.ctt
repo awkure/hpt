@@ -5,62 +5,90 @@ import sigma
 import bool
 import desc 
 
--- boolInd (A : U) (f t : A) : bool -> A = split { ff -> f ; tt -> t }
-
 mutual 
-    data Skeleton (I : U) (J : I -> U) (b : bool) = var (_ : boolInd unit undefined b) (i : I) -- TODO : error here 
+    data Skeleton (I : U) (J : I -> U) (b : bool) = var (_ : boolInd U unit unit b) (i : I) -- TODO : U bot unit
                                                   | kon (A : U) 
                                                   | sg (S : Skeleton I J b) (T : Approx I J b S -> Skeleton I J b) 
                                                   | op (S : Skeleton I J (notb b)) 
 
     Approx (I : U) (J : I -> U) (b : bool) : Skeleton I J b -> U = split 
-        var i   -> J i
+        var _ i -> J i
         kon A   -> A 
-        sg  S T -> unit -- (s : S) * T s
-        op    T -> Approx I J (notb b) T -- TODO : Trans equiv Approx I J b T
+        sg  S T -> (s : Approx I J b S) * Approx I J b (T s)
+        op    T -> Approx I J (notb b) T -- Approx I J (transport notBoolEq b) T
         
 mutual 
     Traffic (I : U) (J : I -> U) (b : bool) (F : I -> Skeleton I J b) (f : (i : I) -> Approx I J b (F i) -> J i) (i : I) : U 
         = Node I J b F f (F i)
 
     Node (I : U) (J : I -> U) (b : bool) (F : I -> Skeleton I J b) (f : (i : I) -> Approx I J b (F i) -> J i) : Skeleton I J b -> U = split 
-        var i   -> Traffic I J b F f i
+        var _ i -> Traffic I J b F f i
         kon A   -> A 
-        sg  S T -> (n : Node I J b S) * (\(n : Node I J b S) -> Node I J b (T (approx I J b F f S s)))
-        op    T -> Node I J b T
+        sg  S T -> (n : Node I J b F f S) * Node I J b F f (T (approx I J b F f S n))
+        op    T -> unit -- Node I J (transport notBoolEq b) F f T
         
-    approx (I : U) (J : I -> U) (b : bool) (F : I -> Skeleton I J b) (f : (i : I) -> Approx I J b (F i) -> J i) 
-         : (S : Skeleton I J b) -> (N : Node I J b F f S) -> Approx I J b S = split 
-            var i -> f i (approx I J b F f (F i) t)
-            kon A -> idFun 
-            sg S T -> \(N : Node I J b F f D) -> and s' (approx I J b F f (T s') N.2) where s' = approx I J b F f S N.1
-            pi   T -> \(t : _) -> approx I J b F f T t
+    approx (I : U) (J : I -> U) (b : bool) (F : I -> Skeleton I J b) (f : (i : I) -> Approx I J b (F i) -> J i) (S : Skeleton I J b) 
+         : (N : Node I J b F f S) -> Approx I J b S = undefined -- split@(Skeleton I J b -> Node I J b F f S -> Approx I J b S) with
+            -- var _ i -> \(t : Node I J b F f S) -> f i (approx I J b F f (F i) t)
+            -- kon A -> \(_ : Node I J b F f S) -> idfun
+            -- sg S T -> \(N : Node I J b F f D) -> and s' (approx I J b F f (T s') N.2) where s' = approx I J b F f S N.1
+            -- sg S T N -> \(_ : Skeleton I J b) -> and s' (approx I J b F f (T s') N.2) where s' : Node I J b F f S  = approx I J b F f S N.1
+            -- pi   T t -> approx I J b F f T t
             
 mutual 
     Client (I : U) (J : I -> U) (b : bool) (F : I -> Skeleton I J b) (f : (i : I) -> Approx I J b (F i) -> J i) (i : I) : U 
         = ClientNode I J b F f (F i)
         
-    ClientNode (I : U) (J : I -> U) (b : bool) (F : I -> Skeleton I J b) (f : (i : I) -> Approx I J b (F i) -> J i) : Skeleton I J b -> U = split 
-        var i   -> Client I J b F f i
+    ClientNode (I : U) (J : I -> U) (b : bool) (F : I -> Skeleton I J b) (f : (i : I) -> Approx I J b (F i) -> J i) 
+             : Skeleton I J b -> U = split 
+        var _ i -> Client I J b F f i
         kon A   -> A 
-        sg  S T -> (N : ClientNode I J b F f S) 
-                 * (\(N : ClientNode I J b F f S) 
-                     (SB : ServerNodeBroadcast I J b F f S N) -> ClientNode I J b F f (T (approx I J b F f S (clientNodeTraffic s)))
+        sg  S T ->  (N  : ClientNode          I J b F f S) 
+                * (\(SB : ServerNodeBroadcast I J b F f S N) -> ClientNode I J b F f (T (approx I J b F f S (clientNodeTraffic I J b F f S N SB))))
         op    T -> ServerNode I J b F f T
-        
-    Server (I : U) (J : I -> U) (b : bool) (F : I -> Skeleton I J b) (f : (i : I) -> Approx I J b (F i) -> J i) (i : I) : U 
-        = ServerNode I J b F f (F i)
         
     ServerNode (I : U) (J : I -> U) (b : bool) (F : I -> Skeleton I J b) (f : (i : I) -> Approx I J b (F i) -> J i) : Skeleton I J b -> U = split 
         var i   -> Server I J b F f i 
         kon A   -> A 
-        sg  S T -> (N : ServerNode I J b F f S) 
-                 * (\(N : ServerNode I J b F f S)
-                     (CB : ClientNodeBroadcast I J b F f S N) -> ServerNode I J b F f (T (approx I J b F f S (serverNodeTraffic s))))
+        sg  S T ->  (N  : ServerNode          I J b F f S) 
+                * (\(CB : ClientNodeBroadcast I J b F f S N) -> ServerNode I J b F f (T (approx I J b F f S (serverNodeTraffic I J b F f S N CB))))
         op    T -> ClientNode I J b F f T
+
+    ClientNodeBroadcast (I : U) (J : I -> U) (b : bool) (F : I -> Skeleton I J b) (f : (i : I) -> Approx I J b (F i) -> J i) 
+                        (i : I) (s : Skeleton I J b F f) : ServerNode I J b F f s -> U = split@(Skeleton I J b F f -> ServerNode I J b F f s -> U) with 
+        var _ i -> ClientBroadcast I J b F f i 
+        kon A   -> unit
+        sg  S T -> \(N   : Node                I J b F f s) -> 
+                    (cnb : ClientNodeBroadcast I J b F f S N.1) 
+                  * ClientNodeBroadcast I J b F f (T (approx I J b F f S (serverNodeTraffic I J b F f i S N.1 cnb))) (N.2 cnb)
+        op D    -> \(sn : ServerNode I J b F f s) -> ServerNodeBroadcast I J b F f D sn
         
-            
+    ServerNodeBroadcast (I : U) (J : I -> U) (b : bool) (F : I -> Skeleton I J b) (f : (i : I) -> Approx I J b (F i) -> J i) 
+                        (s : Skeleton I J b F f) : ClientNode I J b F f s -> U = undefined 
+                        
+    Server (I : U) (J : I -> U) (b : bool) (F : I -> Skeleton I J b) (f : (i : I) -> Approx I J b (F i) -> J i) (i : I) : U 
+        = ServerNode I J b F f (F i)
         
--- mutual 
---     Client (I : U) (J : I -> U) (b : bool) : Skeleton I J b -> U = ClientNode I J F f (F i)
---     ClientNode (I : U) (J : I -> U) (F : I -> Skeleton) (b : bool) 
+    ClientBroadcast (I : U) (J : I -> U) (b : bool) (F : I -> Skeleton I J b) (f : (i : I) -> Approx I J b (F i) -> J i) 
+                    (i : I) (c : Server I J b F f i) : U 
+        = ClientNodeBroadcast I J b F f (F i) c 
+
+    serverTraffic (I : U) (J : I -> U) (b : bool) (F : I -> Skeleton I J b) (f : (i : I) -> Approx I J b (F i) -> J i) (i : I) 
+                  (s : Server I J b F f i) (cb : ClientBroadcast I J b F f i s) : Traffic I J b F f i 
+        = serverNodeTraffic I J b F f i (F i) s cb 
+        
+    ServerBroadcast (I : U) (J : I -> U) (b : bool) (F : I -> Skeleton I J b) (f : (i : I) -> Approx I J b (F i) -> J i) 
+                    (i : I) (c : Client I J b F f i) : U 
+        = ServerNodeBroadcast I J b F f (F i) c 
+        
+    clientTraffic (I : U) (J : I -> U) (b : bool) (F : I -> Skeleton I J b) (f : (i : I) -> Approx I J b (F i) -> J i) (i : I)
+                  (c : Client I J b F f i) (sb : ServerBroadcast I J b F f i c) : Traffic I J b F f i 
+        = clientNodeTraffic I J b F f i (F i) c sb
+
+    clientNodeTraffic (I : U) (J : I -> U) (b : bool) (F : I -> Skeleton I J b) (f : (i : I) -> Approx I J b (F i) -> J i)
+                      (i : I) (s : Skeleton I J b F f) (cn : ClientNode I J b F f s) (snb : ServerNodeBroadcast I J b F f s cn) : Node I J b F f s 
+        = undefined 
+                      
+    serverNodeTraffic (I : U) (J : I -> U) (b : bool) (F : I -> Skeleton I J b) (f : (i : I) -> Approx I J b (F i) -> J i)
+                      (i : I) (s : Skeleton I J b F f) (sn : ServerNode I J b F f s) (cnb : ClientNodeBroadcast I J b F f s sn) : Node I J b F f s 
+        = undefined 

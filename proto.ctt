@@ -1,7 +1,6 @@
 module proto where 
 
 import path
--- import nat
 
 data unit = tt 
 
